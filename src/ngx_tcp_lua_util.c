@@ -7,6 +7,7 @@
 #include "ngx_tcp_lua_exception.h"
 #include "ngx_tcp_lua_log.h"
 #include "ngx_tcp_lua_time.h"
+#include "ngx_tcplua_bit.h"
 
 
 char ngx_tcp_lua_code_cache_key;
@@ -129,6 +130,8 @@ ngx_tcp_lua_inject_ngx_api(ngx_conf_t *cf, lua_State *L)
     ngx_tcp_lua_inject_time_api(L);
 
     ngx_tcp_lua_inject_req_time_api(L);
+
+    ngx_tcp_lua_inject_bit_api(L);
 
     lua_getglobal(L, "package"); /* ngx package */
     lua_getfield(L, -1, "loaded"); /* ngx package loaded */
