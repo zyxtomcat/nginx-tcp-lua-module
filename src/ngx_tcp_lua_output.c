@@ -164,7 +164,7 @@ ngx_tcp_lua_ngx_echo(lua_State *L, unsigned newline)
                 break;
 
             case LUA_TTABLE:
-                //b->last = ngx_tcp_lua_copy_str_in_table(L, i, b->last);
+                b->last = ngx_tcp_lua_copy_str_in_table(L, b->last);
                 break;
 
             case LUA_TLIGHTUSERDATA:
@@ -201,6 +201,8 @@ ngx_tcp_lua_ngx_echo(lua_State *L, unsigned newline)
                    newline ? "lua say response" : "lua print response");
                    
     chain = s->connection->send_chain(s->connection, cl, 0);
+
+    s->bytes_write = s->connection->sent;
 
     ngx_log_debug1(NGX_LOG_DEBUG_HTTP, s->connection->log, 0,
                   "tcp_lua write chain %p", chain);

@@ -96,6 +96,7 @@ static void ngx_tcp_lua_socket_cleanup(void *data);
 static int ngx_tcp_lua_socket_upstream_destroy(lua_State *L);
 static ngx_int_t ngx_tcp_lua_get_keepalive_peer(ngx_tcp_session_t *s, lua_State *L,
     int key_index, ngx_tcp_lua_socket_upstream_t *u);
+static int ngx_tcp_lua_socket_tcp_read_bytes(lua_State *L);
 
 
 void
@@ -136,6 +137,9 @@ ngx_tcp_lua_inject_socket_api(ngx_log_t *log, lua_State *L)
 
     lua_pushcfunction(L, ngx_tcp_lua_socket_tcp_receiveuntil);
     lua_setfield(L, -2, "receiveuntil");
+
+    lua_pushcfunction(L, ngx_tcp_lua_socket_tcp_read_bytes);
+    lua_setfield(L, -2, "read_bytes");
 
     lua_pushcfunction(L, ngx_tcp_lua_socket_tcp_settimeout);
     lua_setfield(L, -2, "settimeout"); /* ngx socket mt */
@@ -3509,3 +3513,37 @@ static ngx_int_t ngx_tcp_lua_socket_insert_buffer(ngx_tcp_session_t *s,
     return NGX_OK;
 }
 
+static int 
+ngx_tcp_lua_socket_tcp_read_bytes(lua_State *L)
+{
+    ngx_tcp_session_t       *s;
+    int                     n;
+    lua_Integer             bytes;
+
+    n = lua_gettop(L);
+    if (n != 2) {
+        return luaL_error(L, "expecting 2 arguments "
+                          "(including the object), but got %d", n);
+    }
+
+    lua_pushlightuserdata(L, &ngx_tcp_lua_request_key);
+    lua_rawget(L, LUA_GLOBALSINDEX);
+    s = lua_touserdata(L, -1);
+    lua_pop(L, 1);
+
+    ngx_log_debug0(NGX_LOG_DEBUG_HTTP, s->connection->log, 0,
+                   "lua socket calling read_bytes() method");
+
+    luaL_checktype(L, 1, LUA_TTABLE);
+
+    if (!lua_isnumber(L, 2)) {
+        return luaL_argerror(L, 2, "read_bytes #2 args error" 
+                            "expect not number");
+    }
+
+    bytes = lua_tointeger(L, 2);
+
+    s->bytes_read = (off_t) bytes;
+
+    return 1;
+}

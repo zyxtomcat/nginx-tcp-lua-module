@@ -483,7 +483,7 @@ ngx_tcp_finalize_session(ngx_tcp_session_t *s)
 
     c = s->connection;
 
-    //ngx_tcp_log_handler(s);
+    //ngx_tcp_access_log_handler(s);
 
     ngx_log_debug1(NGX_LOG_DEBUG_EVENT, c->log, 0,
                    "close tcp session: %d", c->fd);

@@ -70,6 +70,6 @@ void ngx_tcp_finalize_session(ngx_tcp_session_t *s);
 ngx_tcp_cleanup_t * ngx_tcp_cleanup_add(ngx_tcp_session_t *s, size_t size);
 
 ngx_int_t ngx_tcp_access_handler(ngx_tcp_session_t *s);
-ngx_int_t ngx_tcp_log_handler(ngx_tcp_session_t *s);
+ngx_int_t ngx_tcp_access_log_handler(ngx_tcp_session_t *s);
 
 #endif

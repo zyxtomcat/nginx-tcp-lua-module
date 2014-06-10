@@ -165,6 +165,7 @@ typedef struct {
 
 
 #define NGX_TCP_LUA_PROTOCOL    0
+#define NGX_TCP_ECHO_PROTOCOL   1
 
 
 struct ngx_tcp_core_srv_conf_s {

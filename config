@@ -156,12 +156,13 @@ fi
 #CORE_LIBS="$CORE_LIBS $ngx_feature_libs"
 
 ngx_addon_name=ngx_tcp_lua_module
-EVENT_MODULES="$EVENT_MODULES ngx_tcp_module ngx_tcp_core_module ngx_tcp_lua_module"
+EVENT_MODULES="$EVENT_MODULES ngx_tcp_module ngx_tcp_core_module ngx_tcp_lua_module ngx_tcp_echo_module"
 NGX_ADDON_SRCS="$NGX_ADDON_SRCS $ngx_addon_dir/src/ngx_tcp.c \
                 $ngx_addon_dir/src/ngx_tcp_core_module.c \
                 $ngx_addon_dir/src/ngx_tcp_session.c \
                 $ngx_addon_dir/src/ngx_tcp_access.c \
                 $ngx_addon_dir/src/ngx_tcp_lua_module.c \
+                $ngx_addon_dir/src/ngx_tcp_echo_module.c \
                 $ngx_addon_dir/src/ngx_tcp_lua_cache.c \
                 $ngx_addon_dir/src/ngx_tcp_lua_clfactory.c \
                 $ngx_addon_dir/src/ngx_tcp_lua_util.c \
@@ -171,5 +172,7 @@ NGX_ADDON_SRCS="$NGX_ADDON_SRCS $ngx_addon_dir/src/ngx_tcp.c \
                 $ngx_addon_dir/src/ngx_tcp_lua_log.c \
                 $ngx_addon_dir/src/ngx_tcp_lua_time.c \
                 $ngx_addon_dir/src/ngx_tcp_lua_string.c \
+                $ngx_addon_dir/src/ngx_tcp_access_log.c \
+                $ngx_addon_dir/src/ngx_tcp_lua_stat.c \
                 $ngx_addon_dir/src/ngx_tcp_lua_bit.c"
 
