@@ -332,6 +332,8 @@ found:
     addr->ipv6only = listen->ipv6only;
 #endif
 
+    addr->backlog = listen->backlog;
+
     return NGX_OK;
 }
 
@@ -628,6 +630,7 @@ ngx_tcp_add_listening(ngx_conf_t *cf, ngx_tcp_conf_addr_t *addr)
     ls->log.data = &ls->addr_text;
     ls->log.handler = ngx_accept_log_error;
 
+    ls->backlog = addr->backlog;
 /*
 #if (NGX_WIN32)
     {

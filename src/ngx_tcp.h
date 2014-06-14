@@ -47,6 +47,7 @@ typedef struct {
 #if (NGX_HAVE_INET6 && defined IPV6_V6ONLY)
     unsigned                ipv6only:2;
 #endif
+    int                     backlog;
     ngx_tcp_core_srv_conf_t *conf;
 } ngx_tcp_listen_t;
 
@@ -123,6 +124,7 @@ typedef struct {
 #if (NGX_HAVE_INET6 && defined IPV6_V6ONLY)
     unsigned                 ipv6only:2;
 #endif
+    int                      backlog;
 } ngx_tcp_conf_addr_t;
 
 typedef struct {

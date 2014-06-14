@@ -548,6 +548,19 @@ ngx_tcp_core_listen(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
             continue;
         }
 
+        if (ngx_strncmp(value[i].data, "backlog=", 8) == 0 ) {
+            ls->backlog = ngx_atoi(value[i].data + 8, value[i].len - 8);
+            if (ls->backlog == NGX_ERROR || ls->backlog == 0) {
+                ngx_conf_log_error(NGX_LOG_EMERG, cf, 0, 
+                        "invalid backlog values \"%s\"",
+                        &value[i].data[8]);
+
+                return NGX_CONF_ERROR;
+            }
+
+            continue;
+        }
+
         if (ngx_strncmp(value[i].data, "ipv6only=o", 10) == 0) {
 #if (NGX_HAVE_INET6 && defined IPV6_V6ONLY)
             struct sockaddr  *sa;
