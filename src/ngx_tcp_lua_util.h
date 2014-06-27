@@ -27,6 +27,7 @@ extern char ngx_tcp_lua_request_key;
 /* char whose address we'll use as key for the nginx config logger */
 extern char ngx_tcp_lua_cf_log_key;
 
+extern char ngx_tcp_lua_request_socket_key;
 
 
 lua_State *ngx_tcp_lua_new_state(ngx_conf_t *cf, ngx_tcp_lua_main_conf_t *lmcf);

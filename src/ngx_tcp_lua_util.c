@@ -16,6 +16,7 @@ char ngx_tcp_lua_ctx_tables_key;
 char ngx_tcp_lua_regex_cache_key;
 char ngx_tcp_lua_socket_pool_key;
 char ngx_tcp_lua_request_key;
+char ngx_tcp_lua_request_socket_key;
 
 
 /*  coroutine anchoring table key in Lua vm registry */
