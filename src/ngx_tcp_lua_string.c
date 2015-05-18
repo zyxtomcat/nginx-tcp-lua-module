@@ -13,6 +13,7 @@
 
 #include "ngx_tcp_lua_string.h"
 #include "ngx_tcp_lua_util.h"
+#include "ngx_tcp_lua_http_args.h"
 //#include "ngx_tcp_lua_args.h"
 #include "ngx_crc32.h"
 
@@ -32,6 +33,8 @@
 #define SHA_DIGEST_LENGTH 20
 #endif
 
+static uintptr_t ngx_tcp_lua_ngx_escape_sql_str(u_char *dst, u_char *src,
+        size_t size);
 
 static int ngx_tcp_lua_ngx_md5(lua_State *L);
 static int ngx_tcp_lua_ngx_md5_bin(lua_State *L);
@@ -44,9 +47,11 @@ static int ngx_tcp_lua_ngx_decode_base64(lua_State *L);
 static int ngx_tcp_lua_ngx_encode_base64(lua_State *L);
 static int ngx_tcp_lua_ngx_crc32_short(lua_State *L);
 static int ngx_tcp_lua_ngx_crc32_long(lua_State *L);
+static int ngx_tcp_lua_ngx_encode_args(lua_State *L);
+static int ngx_tcp_lua_ngx_quote_sql_str(lua_State *L);
 #if (NGX_OPENSSL)
 static int ngx_tcp_lua_ngx_hmac_sha1(lua_State *L);
-#endif
+#endif 
 
 
 void
@@ -75,6 +80,12 @@ ngx_tcp_lua_inject_string_api(lua_State *L)
 
     lua_pushcfunction(L, ngx_tcp_lua_ngx_crc32_long);
     lua_setfield(L, -2, "crc32_long");
+
+    lua_pushcfunction(L, ngx_tcp_lua_ngx_encode_args);
+    lua_setfield(L, -2, "encode_args");
+
+    lua_pushcfunction(L, ngx_tcp_lua_ngx_quote_sql_str);
+    lua_setfield(L, -2, "quote_sql_str");
 
 #if (NGX_OPENSSL)
     lua_pushcfunction(L, ngx_tcp_lua_ngx_hmac_sha1);
@@ -303,6 +314,168 @@ ngx_tcp_lua_ngx_crc32_long(lua_State *L)
 
     lua_pushnumber(L, (lua_Number) ngx_crc32_long(p, len));
     return 1;
+}
+
+static int
+ngx_tcp_lua_ngx_encode_args(lua_State *L)
+{
+    ngx_str_t               args;
+
+    if (lua_gettop(L) != 1) {
+        return luaL_error(L, "expecting 1 argument but seen %d", 
+                            lua_gettop(L));
+    }
+
+    luaL_checktype(L, 1, LUA_TTABLE);
+    ngx_tcp_lua_process_http_args_option(NULL, L, 1, &args);
+    lua_pushlstring(L, (char *)args.data, args.len);
+    return 1;
+}
+
+static int
+ngx_tcp_lua_ngx_quote_sql_str(lua_State *L)
+{
+    size_t                   len, dlen, escape;
+    u_char                  *p;
+    u_char                  *src, *dst;
+
+    if (lua_gettop(L) != 1) {
+        return luaL_error(L, "expecting one argument");
+    }
+
+    src = (u_char *) luaL_checklstring(L, 1, &len);
+
+    if (len == 0) {
+        dst = (u_char *) "''";
+        dlen = sizeof("''") - 1;
+        lua_pushlstring(L, (char *) dst, dlen);
+        return 1;
+    }
+
+    escape = ngx_tcp_lua_ngx_escape_sql_str(NULL, src, len);
+
+    dlen = sizeof("''") - 1 + len + escape;
+
+    p = lua_newuserdata(L, dlen);
+
+    dst = p;
+
+    *p++ = '\'';
+
+    if (escape == 0) {
+        p = ngx_copy(p, src, len);
+
+    } else {
+        p = (u_char *) ngx_tcp_lua_ngx_escape_sql_str(p, src, len);
+    }
+
+    *p++ = '\'';
+
+    if (p != dst + dlen) {
+        return NGX_ERROR;
+    }
+
+    lua_pushlstring(L, (char *) dst, p - dst);
+
+    return 1;
+}
+
+
+static uintptr_t
+ngx_tcp_lua_ngx_escape_sql_str(u_char *dst, u_char *src, size_t size)
+{
+    ngx_uint_t               n;
+
+    if (dst == NULL) {
+        /* find the number of chars to be escaped */
+        n = 0;
+        while (size) {
+            /* the highest bit of all the UTF-8 chars
+             * is always 1 */
+            if ((*src & 0x80) == 0) {
+                switch (*src) {
+                    case '\0':
+                    case '\b':
+                    case '\n':
+                    case '\r':
+                    case '\t':
+                    case 26:  /* \Z */
+                    case '\\':
+                    case '\'':
+                    case '"':
+                        n++;
+                        break;
+                    default:
+                        break;
+                }
+            }
+            src++;
+            size--;
+        }
+
+        return (uintptr_t) n;
+    }
+
+    while (size) {
+        if ((*src & 0x80) == 0) {
+            switch (*src) {
+                case '\0':
+                    *dst++ = '\\';
+                    *dst++ = '0';
+                    break;
+
+                case '\b':
+                    *dst++ = '\\';
+                    *dst++ = 'b';
+                    break;
+
+                case '\n':
+                    *dst++ = '\\';
+                    *dst++ = 'n';
+                    break;
+
+                case '\r':
+                    *dst++ = '\\';
+                    *dst++ = 'r';
+                    break;
+
+                case '\t':
+                    *dst++ = '\\';
+                    *dst++ = 't';
+                    break;
+
+                case 26:
+                    *dst++ = '\\';
+                    *dst++ = 'Z';
+                    break;
+
+                case '\\':
+                    *dst++ = '\\';
+                    *dst++ = '\\';
+                    break;
+
+                case '\'':
+                    *dst++ = '\\';
+                    *dst++ = '\'';
+                    break;
+
+                case '"':
+                    *dst++ = '\\';
+                    *dst++ = '"';
+                    break;
+
+                default:
+                    *dst++ = *src;
+                    break;
+            }
+        } else {
+            *dst++ = *src;
+        }
+        src++;
+        size--;
+    } /* while (size) */
+
+    return (uintptr_t) dst;
 }
 
 
